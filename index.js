@@ -11,12 +11,8 @@ async function run () {
     .split(/\n/)
     .filter(branch => !!branch.trim())
     .map(branch => {
-      const [, flag, name, hint] = branch.match(/([* ])\s+([^\s]+)\s+(.+)/)
-      return {
-        value: name,
-        disabled: flag === '*',
-        hint
-      }
+      const [, flag, value, hint] = branch.match(/([* ]) +([^ ]+) +(.+)/)
+      return { value, hint, disabled: flag === '*' }
     })
 
   const { branch } = await prompts({
