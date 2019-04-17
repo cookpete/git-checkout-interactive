@@ -6,6 +6,11 @@ const prompts = require('prompts')
 async function run () {
   const branches = await cmd('git branch -v --sort=-committerdate')
 
+  if (!branches) {
+    console.log('fatal: not a git repository')
+    process.exit(1)
+  }
+
   const choices = branches
     .split(/\n/)
     .filter(branch => !!branch.trim())
