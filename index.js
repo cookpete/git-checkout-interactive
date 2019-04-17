@@ -33,7 +33,6 @@ async function run () {
     name: 'branch',
     message: 'Select a branch',
     choices,
-    initial: 0,
     hint: commits[choices[0].value],
     warn: 'Current branch',
     onState ({ value }) {
