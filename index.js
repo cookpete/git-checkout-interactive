@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process')
+const { promisify } = require('util')
+const exec = promisify(require('child_process').exec)
 const prompts = require('prompts')
 
 async function run () {
-  const branches = await cmd('git branch -v --sort=-committerdate')
+  const branches = await exec('git branch -v --sort=-committerdate')
 
-  if (!branches) {
-    console.log('fatal: not a git repository')
-    process.exit(1)
-  }
-
-  const choices = branches
+  const choices = branches.stdout
     .split(/\n/)
     .filter(branch => !!branch.trim())
     .map(branch => {
@@ -31,29 +27,31 @@ async function run () {
   const { branch } = await prompts({
     type: 'select',
     name: 'branch',
-    message: 'Select a branch',
+    message: 'Switch branch',
     choices,
     hint: commits[choices[0].value],
-    warn: 'Current branch',
+    warn: 'current branch',
     onState ({ value }) {
       this.hint = commits[value]
     }
   })
 
-  await cmd(`git checkout ${branch}`)
+  await checkout(branch)
 }
 
-function cmd (string) {
-  const [ cmd, ...args ] = string.split(' ')
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args)
-    let data = ''
-    child.stdout.on('data', buffer => {
-      data += buffer.toString()
-    })
-    child.stdout.on('end', () => resolve(data))
-    child.on('error', reject)
-  })
+async function checkout (branch) {
+  if (!branch) return
+  const { stdout, stderr } = await exec(`git checkout ${branch}`)
+  process.stdout.write(stdout)
+  process.stderr.write(stderr)
 }
 
-run()
+function onError (e) {
+  if (e.stderr) {
+    process.stderr.write(e.stderr)
+  } else {
+    console.error(e)
+  }
+}
+
+run().catch(onError)
