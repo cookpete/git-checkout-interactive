@@ -5,34 +5,29 @@ const exec = promisify(require('child_process').exec)
 const prompts = require('prompts')
 
 async function run () {
-  const branches = await exec('git branch -v --sort=-committerdate')
+  const { stdout: branches } = await exec('git branch -v --sort=-committerdate')
 
-  const choices = branches.stdout
+  const choices = branches
     .split(/\n/)
     .filter(branch => !!branch.trim())
     .map(branch => {
-      const [, flag, name, info] = branch.match(/([* ])\s+([^\s]+)\s+(.+)/)
+      const [, flag, name, hint] = branch.match(/([* ])\s+([^\s]+)\s+(.+)/)
       return {
         value: name,
         disabled: flag === '*',
-        info
+        hint
       }
     })
-
-  const commits = choices.reduce((object, { value, info }) => ({
-    ...object,
-    [value]: info
-  }), {})
 
   const { branch } = await prompts({
     type: 'select',
     name: 'branch',
     message: 'Switch branch',
     choices,
-    hint: commits[choices[0].value],
+    hint: choices[0].hint,
     warn: 'current branch',
     onState ({ value }) {
-      this.hint = commits[value]
+      this.hint = choices.find(c => c.value === value).hint
     }
   })
 
