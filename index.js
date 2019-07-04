@@ -32,7 +32,7 @@ async function run () {
 
 async function checkout (branch) {
   if (!branch) return
-  const { stdout, stderr } = await exec(`git checkout ${branch}`)
+  const { stdout, stderr } = await exec(`git checkout '${branch}'`)
   process.stdout.write(stdout)
   process.stderr.write(stderr)
 }
