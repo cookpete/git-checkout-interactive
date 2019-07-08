@@ -18,7 +18,7 @@ async function run () {
     .concat(remoteTrimmedBranches)
     .filter(branch => !!branch.trim())
     .map(branch => branch.match(/([*^ ]) +([^ ]+) +(.+)/))
-    .filter(([, flag, value, hint], i, all) => flag !== '^' || all.find(e => e.value === value))
+    .filter(([, flag, value, hint], i, all) => flag !== '^' ||!all.find(e => e.value === value))
     .map(([, flag, value, hint]) => {
       return { title: flag === '^' ? `^ ${value}` : value, value, hint, disabled: flag === '*', remote: flag === '^' }
     })
