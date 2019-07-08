@@ -5,15 +5,23 @@ const exec = promisify(require('child_process').exec)
 const prompts = require('prompts')
 
 async function run () {
-  const { stdout: branches } = await exec('git branch -v --sort=-committerdate')
+  const { stdout: localBranches } = await exec('git branch -v --sort=-committerdate')
+  const { stdout: remoteBranches } = await exec('git branch -v -r')
 
-  const choices = branches
+  const remoteTrimmedBranches = remoteBranches
     .split(/\n/)
+    .filter(l => !l.includes('origin/HEAD'))
+    .map(l => `  ${l.split('origin/').slice(1).join('origin/')}`)
+
+  const choices = localBranches
+    .split(/\n/)
+    .concat(remoteTrimmedBranches)
     .filter(branch => !!branch.trim())
     .map(branch => {
       const [, flag, value, hint] = branch.match(/([* ]) +([^ ]+) +(.+)/)
       return { value, hint, disabled: flag === '*' }
     })
+
 
   const { branch } = await prompts({
     type: 'select',
