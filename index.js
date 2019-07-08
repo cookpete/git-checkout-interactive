@@ -10,16 +10,17 @@ async function run () {
 
   const remoteTrimmedBranches = remoteBranches
     .split(/\n/)
-    .filter(l => !l.includes('origin/HEAD'))
-    .map(l => `  ${l.split('origin/').slice(1).join('origin/')}`)
+    .filter(l => !l.includes('origin/HEAD') && l !== '')
+    .map(l => ` ^ ${l.split('origin/').slice(1).join('origin/')}`)
 
   const choices = localBranches
     .split(/\n/)
     .concat(remoteTrimmedBranches)
     .filter(branch => !!branch.trim())
-    .map(branch => {
-      const [, flag, value, hint] = branch.match(/([* ]) +([^ ]+) +(.+)/)
-      return { value, hint, disabled: flag === '*' }
+    .map(branch => branch.match(/([*^ ]) +([^ ]+) +(.+)/))
+    .filter(([, flag, value, hint], i, all) => flag !== '^' || all.find(e => e.value === value))
+    .map(([, flag, value, hint]) => {
+      return { title: flag === '^' ? `^ ${value}` : value, value, hint, disabled: flag === '*', remote: flag === '^' }
     })
 
 
