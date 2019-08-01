@@ -5,15 +5,24 @@ const exec = promisify(require('child_process').exec)
 const prompts = require('prompts')
 
 async function run () {
-  const { stdout: branches } = await exec('git branch -v --sort=-committerdate')
+  const { stdout: localBranches } = await exec('git branch -v --sort=-committerdate')
+  const { stdout: remoteBranches } = await exec('git branch -v -r')
 
-  const choices = branches
+  const remoteTrimmedBranches = remoteBranches
     .split(/\n/)
+    .filter(l => !l.includes('origin/HEAD') && l !== '')
+    .map(l => ` ^ ${l.split('origin/').slice(1).join('origin/')}`)
+
+  const choices = localBranches
+    .split(/\n/)
+    .concat(remoteTrimmedBranches)
     .filter(branch => !!branch.trim())
-    .map(branch => {
-      const [, flag, value, hint] = branch.match(/([* ]) +([^ ]+) +(.+)/)
-      return { value, hint, disabled: flag === '*' }
+    .map(branch => branch.match(/([*^ ]) +([^ ]+) +(.+)/))
+    .filter(([, flag, value, hint], i, all) => flag !== '^' ||!all.find(e => e.value === value))
+    .map(([, flag, value, hint]) => {
+      return { title: flag === '^' ? `^ ${value}` : value, value, hint, disabled: flag === '*', remote: flag === '^' }
     })
+
 
   const { branch } = await prompts({
     type: 'select',
@@ -32,7 +41,7 @@ async function run () {
 
 async function checkout (branch) {
   if (!branch) return
-  const { stdout, stderr } = await exec(`git checkout ${branch}`)
+  const { stdout, stderr } = await exec(`git checkout '${branch}'`)
   process.stdout.write(stdout)
   process.stderr.write(stderr)
 }
