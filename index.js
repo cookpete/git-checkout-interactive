@@ -48,13 +48,9 @@ function onError (e) {
 function getGitBranchExecLine() {
   const argsAlwaysPresent = ['-v']
 
-  let args = process.argv.slice(2).reduce(function(carry, current) {
-    if (argsAlwaysPresent.indexOf(current) < 0) {
-      carry.push(current)
-    }
-
-    return carry
-  }, [])
+  let args = process.argv.slice(2).filter(function(current) {
+    return argsAlwaysPresent.indexOf(current) < 0;
+  })
 
   return 'git branch ' + argsAlwaysPresent.concat(args).join(' ')
 }
