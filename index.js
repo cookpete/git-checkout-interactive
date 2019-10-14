@@ -5,7 +5,7 @@ const exec = promisify(require('child_process').exec)
 const prompts = require('prompts')
 
 async function run () {
-  const { stdout: branches } = await exec('git branch -v --sort=-committerdate')
+  const { stdout: branches } = await exec(getGitBranchExecLine())
 
   const choices = branches
     .split(/\n/)
@@ -43,6 +43,20 @@ function onError (e) {
   } else {
     console.error(e)
   }
+}
+
+function getGitBranchExecLine() {
+  const argsAlwaysPresent = ['-v']
+
+  let args = process.argv.slice(2).reduce(function(carry, current) {
+    if (argsAlwaysPresent.indexOf(current) < 0) {
+      carry.push(current)
+    }
+
+    return carry
+  }, [])
+
+  return 'git branch ' + argsAlwaysPresent.concat(args).join(' ')
 }
 
 run().catch(onError)
